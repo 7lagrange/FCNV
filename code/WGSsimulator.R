@@ -1,7 +1,8 @@
-rm(list = ls())
+
 #uses markov chain (efficiently simulated by geometric variables, given state change probabilities for tumor and normal)
 #Nstates 1,2,3
 #Tstates 0,1,2,3,4
+rm(list = ls())
 
 readStarts<-function(length, numreads, CNV.data){
   CNV.data$Ncount<-(tabulate(sample(1:length, numreads, replace=TRUE, prob=CNV.data$Nstates)))
@@ -44,13 +45,13 @@ SimulateData<-function(len=300000000, binsize=10000, tstatechange=0.0005, nstate
   return(CNV.data)
 }
 
+#assumes that normal state is 2, then uses unambiguous log values over threshold of tumor 3 or under tumor 1
 purityPrior<-function(logratios){
   k<-(exp(logratios[logratios < log(1/2)])-1)/(0/2 - 1)
   k<-c(k, (exp(logratios[logratios > log(3/2)])-1)/(4/2 - 1))
   k<-k[k<1&k>0]
   return(k)
 }
-#assumes that normal state is 2, then uses unambiguous log values over threshold of tumor 3 or under tumor 1
 
 
 emissionDistributions<-function(len=3000000000, binsize=1000, purity=0.8){
@@ -66,8 +67,15 @@ emissionDistributions<-function(len=3000000000, binsize=1000, purity=0.8){
   return(data.frame(tstate, nstate, mean, variance))
 }
 
-threeK <- SimulateData(len=3*10^9,bin = 1000,tstatechange=0.0005, nstatechange=0.0001, purity=c(0.9, 0.85))
+
+
+threeK <- SimulateData(len=3*10^7,bin = 1000,tstatechange=0.0005, purity=c(0.9, 0.8))
+
+# Tumor/Normal state transformation 
 threeK$state <- threeK$Tstates + 1 + (threeK$Nstates-1)*5
+
+# remove invalid data
 threeK <- threeK[threeK$log.ratios!= Inf,]
 
-write.csv(threeK, file = "simulation/threeM_90_85.csv",row.names=FALSE)
+# write to csv for HMM and post-process
+write.csv(threeK, file = "../data/threeK_90_85.csv",row.names=FALSE)
