@@ -57,3 +57,8 @@ naivethreshold<-function(CNV.data){
   return(CNV.data)
 }
 
+simutation <- read.csv(file="data/threeM_90_90.csv",head=TRUE,sep=",")
+
+# post process HMM output
+output <- naivethreshold(postprocess(compressStates(simutation)))
+write.csv(output, file = "data/threeM_90_90_output.csv")
