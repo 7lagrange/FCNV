@@ -76,6 +76,8 @@ threeK$state <- threeK$Tstates + 1 + (threeK$Nstates-1)*5
 
 # remove invalid data
 threeK <- threeK[threeK$log.ratios!= Inf,]
+threeK <- threeK[!is.na(threeK$Nstates),]
+
 
 # write to csv for HMM and post-process
 write.csv(threeK, file = "../data/threeK_90_85.csv",row.names=FALSE)

@@ -1,3 +1,7 @@
+# postprocess on HMM output, calculate the purity and accuracy for compressed hidden states
+
+
+# function to get postpurity
 postprocess<-function(CNV.data,numclusters=2){
   CNV.data$postpurity<-(exp(CNV.data$log.ratio)-1)/(CNV.data$hiddenTstate/CNV.data$hiddenNstate-1)
   CNV.data$postpurity[CNV.data$hiddenTstate==CNV.data$hiddenNstate]<-NA
@@ -11,6 +15,7 @@ postprocess<-function(CNV.data,numclusters=2){
   return(CNV.data)
 }
 
+# function to get compress states 
 compressStates<-function(CNV.data){
   CNV.data$compressedState<-CNV.data$state
   CNV.data$compressedState[CNV.data$state==1 | CNV.data$state==6 | CNV.data$state==11]<-1
@@ -32,6 +37,7 @@ compressStates<-function(CNV.data){
   return(CNV.data)
 }
 
+# function to cluster states using naive threshold
 naivethreshold<-function(CNV.data){
   purity<-mean(purityPrior(CNV.data$log.ratios),na.rm=TRUE)
   normal<-log((purity*2+(1-purity)*2)/2)
