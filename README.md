@@ -5,6 +5,7 @@ We used hidden markov model to infer the tumor / normal cell admixure and CNV st
 All the programs are running on R. The code folder contains all the relevant scripts to generate the simulated data, process the data and post-process. 
 
 **Functions**
+
 functions in code/WGSsimulator.R are used to generate simulated data, you need to choose the simulated length, slide-bin size, the tumor purity options and tumor, as well as thr normal state transition probabilities (transition equallly likely to any different state). 
 output will be in the data/ folder with filename ends with .simulated.csv
 
