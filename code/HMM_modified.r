@@ -1,5 +1,11 @@
+#assumes that normal state is 2, then uses unambiguous log values over threshold of tumor 3 or under tumor 1
+purityPrior<-function(logratios){
+  k<-(exp(logratios[logratios < log(1/2)])-1)/(0/2 - 1)
+  k<-c(k, (exp(logratios[logratios > log(3/2)])-1)/(4/2 - 1))
+  k<-k[k<1&k>0]
+  return(k)
+}
 
-# prior emission mean and variance
 emissionDistributions<-function(len=3000000000, binsize=1000, purity=0.8){
   length<-len/binsize
   numreads<-20*length
@@ -13,7 +19,6 @@ emissionDistributions<-function(len=3000000000, binsize=1000, purity=0.8){
   return(data.frame(tstate, nstate, mean, variance))
 }
 
-# initialize HMM model with states, transition matrix , emission matrix
 initHMM = function(States, startProbs=NULL, transProbs=NULL,emissionProbs=NULL)
 {
   nStates    = length(States)
@@ -28,16 +33,16 @@ initHMM = function(States, startProbs=NULL, transProbs=NULL,emissionProbs=NULL)
 }
 
 
-# calculate the probablity of observation under the normal distribution
 emission_p = function(hmm, state,observation){
   mean_e <- hmm$emissionProbs[state,]$mean
   std_e <- sqrt(hmm$emissionProbs[state,]$variance)
+  
+
   return (dnorm(observation,mean_e,std_e,log = TRUE)) }
 
 
-# using viterbi algorithm to get the hidden states under parameter
 viterbi = function(hmm, observation)
-{ print (hmm)
+{ 
   hmm$transProbs[is.na(hmm$transProbs)]  = 0 # remove NA in trans matrix
   nObservations  = length(observation)
   nStates    = length(hmm$States)
@@ -64,25 +69,12 @@ viterbi = function(hmm, observation)
       }
       v[state,k] = emission_p(hmm, state,observation[k]) + maxi
     }
-    if (all(is.na(v[,k])) ) {
-    #if (v[1,k] == Inf ) {
-    #if (all(v[,k] == rep(Inf,15)) ) {
-      print (v[,k])
-      print (v[,k-1])
-      print (c(k,'NUMBER OF OBERSERVATION'))
-      print (emission_p(hmm, state,observation[k]))
-      break
-    }
-    #else{
-    #  print (c(k,observation[k]))
-    #  print (v[,k])
-    #  break}
     
   }
   
   # Traceback
   viterbiPath = rep(NA,nObservations)
-  print (v[,nObservations])
+
   for(state in hmm$States)
   {
     if(max(v[,nObservations])==v[state,nObservations])
@@ -107,8 +99,6 @@ viterbi = function(hmm, observation)
 }
 
 
-
-# using viterbi algorithm to get the most probable paramater
 viterbiTraining = function(hmm, observation, maxIterations=100, delta=1E-9, pseudoCount=0)
 {
   tempHmm = hmm
@@ -125,10 +115,10 @@ viterbiTraining = function(hmm, observation, maxIterations=100, delta=1E-9, pseu
     T = T/(apply(T,1,sum))
     
     d = sqrt(sum((tempHmm$transProbs-T)^2)) +  sqrt(sum((tempHmm$emissionProbs$mean-E$mean)^2))
-    #print (d)
     diff = c(diff, d)
     tempHmm$transProbs    = T
     tempHmm$emissionProbs = E
+    print (c('iteration:',i,d))
     if(d < delta)
     {
       break
@@ -138,7 +128,6 @@ viterbiTraining = function(hmm, observation, maxIterations=100, delta=1E-9, pseu
   return(list(hmm=tempHmm,difference=diff))
 }
 
-# update the parameter 
 viterbiTrainingRecursion = function(hmm, observation)
 {
   TransitionMatrix    = hmm$transProbs
@@ -146,7 +135,6 @@ viterbiTrainingRecursion = function(hmm, observation)
   EmissionMatrix      = hmm$emissionProbs
 
   v = viterbi(hmm,  observation)
-  print (c(length(v),'asdasda'))
   for(i in 1:(length(observation)-1))
   { TransitionMatrix[v[i],v[i+1]] = TransitionMatrix[v[i],v[i+1]] + 1 }
   TransitionMatrix[TransitionMatrix==0]  = TransitionMatrix[TransitionMatrix==0] + 0.1#add psudo count
@@ -165,13 +153,13 @@ viterbiTrainingRecursion = function(hmm, observation)
     tau = EmissionMatrix$variance[i]    
     EmissionMatrix$mean[i] =(n*tau*mu+sigma*m)/(n*tau+sigma)   
     EmissionMatrix$variance[i] = (2*sigma * tau)/(tau+sigma)  
+
   }
   
 
   }
   
-  
-  #print (TransitionMatrix)
+
   return(list(TransitionMatrix=TransitionMatrix,EmissionMatrix=EmissionMatrix))
 }
 

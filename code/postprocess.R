@@ -2,7 +2,7 @@
 
 
 # function to get postpurity
-postprocess<-function(CNV.data,numclusters=2){
+postp<-function(CNV.data,numclusters=2){
   CNV.data$postpurity<-(exp(CNV.data$log.ratio)-1)/(CNV.data$hiddenTstate/CNV.data$hiddenNstate-1)
   CNV.data$postpurity[CNV.data$hiddenTstate==CNV.data$hiddenNstate]<-NA
   CNV.data$postpurity[CNV.data$postpurity>1]<-NA
@@ -57,8 +57,19 @@ naivethreshold<-function(CNV.data){
   return(CNV.data)
 }
 
-simutation <- read.csv(file="data/threeM_90_90.csv",head=TRUE,sep=",")
+
+postprocess <- function(filename){
+
+input <- paste("data/",filename,".hmm.csv",sep="")
+
+simutation <- read.csv(file=input,head=TRUE,sep=",")
 
 # post process HMM output
-output <- naivethreshold(postprocess(compressStates(simutation)))
-write.csv(output, file = "data/threeM_90_90_output.csv")
+result <- naivethreshold(postp(compressStates(simutation)))
+
+
+output <- paste("data/",filename,".post.csv",sep="")
+write.csv(result, file = output)
+
+}
+
